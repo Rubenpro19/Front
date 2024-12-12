@@ -5,57 +5,52 @@
       <!-- Mensaje de error -->
       <transition name="fade">
         <div v-if="showError" class="error-message">
-          <i class="fas fa-exclamation-circle icon-green"></i> {{ errorMessage }}
+          <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
         </div>
       </transition>
 
       <!-- Mostrar mensaje de éxito -->
       <transition name="fade">
         <div v-if="showSuccess" class="success-message">
-          <i class="fas fa-check-circle icon-green"></i> Inicio de sesión exitoso. Redirigiendo...
+          <i class="fas fa-check-circle"></i> Inicio de sesión exitoso. Redirigiendo...
         </div>
       </transition>
 
       <!-- Campo de correo electrónico -->
       <div class="form-group">
-        <label for="email">Correo Electrónico</label>
-        <div class="input-with-icon">
-          <i class="fas fa-envelope icon-green"></i>
-          <input type="email" v-model="email" id="email" required />
-        </div>
+        <label for="email"><i class="fas fa-envelope"></i> Correo Electrónico</label>
+        <input type="email" v-model="email" id="email" required placeholder="Ingresa tu correo electrónico" />
       </div>
 
       <!-- Campo de contraseña -->
       <div class="form-group">
-        <label for="password">Contraseña</label>
-        <div class="input-with-icon">
-          <i class="fas fa-lock icon-green"></i>
-          <input type="password" v-model="password" id="password" required />
-        </div>
+        <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
+        <input type="password" v-model="password" id="password" required placeholder="Ingresa tu contraseña" />
       </div>
 
       <!-- Botón para enviar el formulario -->
-      <button type="submit"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+      <button type="submit">
+        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+      </button>
 
       <!-- Enlace para registrarse si no se tiene una cuenta -->
       <div class="login-footer">
-        <h5>No tienes cuenta? <RouterLink to="/UserRegister">Crear Cuenta</RouterLink></h5>
+        <h5>¿No tienes cuenta? <RouterLink to="/UserRegister">Crear Cuenta</RouterLink></h5>
       </div>
     </form>
   </div>
 </template>
 
+
 <script>
 import apiService from '../services/apiService'; // Importar el servicio de la API
+import Swal from 'sweetalert2';
 
 export default {
   data() {
     return {
       email: '', // Email del usuario
       password: '', // Contraseña del usuario
-      showError: false, // Muestra el error si existe
-      errorMessage: '', // Mensaje de error
-      showSuccess: false, // Muestra el mensaje de éxito
     };
   },
   methods: {
@@ -76,11 +71,16 @@ export default {
         sessionStorage.setItem('authToken', token);
         sessionStorage.setItem('user', JSON.stringify(user));
 
-        // Mostrar mensaje de éxito visual
-        this.showSuccess = true;
-        this.showError = false;
+        // Mostrar mensaje de éxito con SweetAlert2
+        Swal.fire({
+          title: '¡Inicio de sesión exitoso!',
+          text: 'Redirigiendo al dashboard...',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+        });
 
-        // Redirigir según el rol del usuario
+        // Redirigir según el rol del usuario después de 1.5 segundos
         setTimeout(() => {
           if (rolId === 1) {
             // Administrador
@@ -92,13 +92,16 @@ export default {
             // Paciente (por defecto)
             this.$router.push('/UserDashboard');
           }
-        }, 1500); // Espera 1.5 segundos antes de redirigir
+        }, 1500);
 
       } catch (error) {
-        // Manejar errores de inicio de sesión
-        this.showError = true;
-        this.showSuccess = false;
-        this.errorMessage = 'Error al iniciar sesión. Verifica tus credenciales.';
+        // Manejar errores de inicio de sesión con SweetAlert2
+        Swal.fire({
+          title: 'Error',
+          text: 'Error al iniciar sesión. Verifica tus credenciales.',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+        });
         console.error('Error al iniciar sesión:', error);
       }
     },
@@ -106,56 +109,48 @@ export default {
 };
 </script>
 
+
 <style scoped>
 .login-container {
-  max-width: 400px;
+  max-width: 500px;
   margin: 100px auto;
   padding: 50px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 1s ease-in-out;
+  text-align: center;
 }
 
-.login-container h2{
-  display: flex;
-  justify-content: center;
+h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
 }
 
 .form-group {
   margin-bottom: 15px;
+  text-align: left;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
   font-weight: bold;
+  color: #555;
 }
 
-.input-with-icon {
-  position: relative;
-}
-
-.input-with-icon i {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #28a745; /* Color verde */
+.form-group label i {
+  margin-right: 8px;
+  color: #555; /* Color gris */
 }
 
 .form-group input {
   width: 100%;
-  padding: 10px 10px 10px 30px; /* Agrega espacio para el ícono */
+  padding: 10px;
   border-radius: 4px;
   border: 1px solid #ccc;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
-}
-
-.form-group input:focus {
-  box-shadow: 0px 2px 10px rgba(0, 123, 255, 0.5);
 }
 
 button {
@@ -175,13 +170,14 @@ button:hover {
 }
 
 button i {
-  margin-right: 8px;
+  margin-right: 5px;
 }
 
 .error-message {
   color: red;
   margin-bottom: 15px;
   font-size: 14px;
+  text-align: center;
 }
 
 .success-message {
@@ -193,8 +189,6 @@ button i {
 
 .login-footer {
   margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
 }
 
 .login-footer a {
@@ -206,33 +200,23 @@ button i {
   text-decoration: underline;
 }
 
-.login-footer h5{
+.login-footer h5 {
   font-size: 1em;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+/* Responsividad */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  h2 {
+    font-size: 20px;
+  }
+
+  button {
+    font-size: 14px;
   }
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter, 
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Añadir clase para los iconos verdes */
-.icon-green {
-  color: #28a745; /* Color verde */
-}
 </style>

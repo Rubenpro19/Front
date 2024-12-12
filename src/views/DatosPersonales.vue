@@ -41,6 +41,7 @@
 
 <script>
 import apiService from '../services/apiService'; // Importar el apiService
+import Swal from 'sweetalert2';
 
 export default {
   data() {
@@ -52,8 +53,6 @@ export default {
         ciudad: '',
         sexo: '',
       },
-      successMessage: '', // Mensaje de éxito si los datos se actualizan correctamente
-      error: null, // Mensaje de error en caso de que ocurra un problema
       errors: {
         ci: '',
         telefono: '',
@@ -84,6 +83,15 @@ export default {
         isValid = false;
       }
 
+      if (!isValid) {
+        Swal.fire({
+          title: 'Error de validación',
+          text: Object.values(this.errors).join(' | '),
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+        });
+      }
+
       return isValid;
     },
     async updateDatos() {
@@ -94,18 +102,24 @@ export default {
 
       try {
         await apiService.updateDatosPersonales(this.datosPersonales); // Eliminamos 'const response'
-        this.successMessage = 'Datos personales actualizados con éxito'; // Mostrar mensaje de éxito
-        this.error = null; // Limpiar mensaje de error, si existía
 
-        // Ocultar el mensaje después de 3 segundos
-        setTimeout(() => {
-          this.successMessage = '';
-        }, 3000);
+        // Mostrar mensaje de éxito con SweetAlert2
+        Swal.fire({
+          title: '¡Éxito!',
+          text: 'Datos personales actualizados con éxito.',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+        });
       } catch (err) {
-        this.error = 'Error al actualizar los datos personales';
-        this.successMessage = ''; // Limpiar mensaje de éxito si hay un error
+        // Mostrar mensaje de error con SweetAlert2
+        Swal.fire({
+          title: 'Error',
+          text: 'Error al actualizar los datos personales.',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+        });
       }
-    }
+    },
   },
   async mounted() {
     // Obtener los datos personales cuando el componente se monta
@@ -113,11 +127,18 @@ export default {
       const response = await apiService.getDatosPersonales();
       this.datosPersonales = response.data;
     } catch (err) {
-      this.error = 'Error al cargar los datos personales';
+      // Mostrar error al cargar los datos personales
+      Swal.fire({
+        title: 'Error',
+        text: 'Error al cargar los datos personales.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+      });
     }
   },
 };
 </script>
+
 
 <style scoped>
 .update-container {
