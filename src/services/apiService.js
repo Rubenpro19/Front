@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Crear una instancia de Axios con configuración predeterminada
 const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api', //Ponemos la ip de la back
+  baseURL: 'http://10.42.0.95:8080/api', //Ponemos la ip de la back
   withCredentials: true, // Necesario para enviar cookies con Laravel Sanctum
   headers: {
     Accept: 'application/json',
