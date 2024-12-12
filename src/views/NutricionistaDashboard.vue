@@ -49,28 +49,42 @@
     </div>
 
     <!-- Lista de Atenciones -->
-    <div v-if="atenciones.length > 0" class="mt-5">
-      <h2 class="text-center mb-4 titulo">Atenciones Realizadas</h2>
-      <div
-        v-for="(atencion, index) in atenciones"
-        :key="atencion.id"
-        class="card atencion-card"
-      >
-        <div class="card-header header-atencion">
-          <h5>
-            Atención #{{ index + 1 }} - Paciente: {{ atencion.turno?.paciente?.nombre || 'N/A' }}
-          </h5>
-          <p>
-            <strong>Fecha:</strong> {{ atencion.turno?.fecha || 'N/A' }} |
-            <strong>Hora:</strong> {{ atencion.turno?.hora || 'N/A' }}
-          </p>
-          <button
-            class="btn btn-detalle"
-            @click="toggleDetalles(index)"
-          >
-            {{ atencion.mostrarDetalles ? 'Ocultar Detalles' : 'Ver Detalles' }}
-          </button>
-        </div>
+    <!-- Lista de Atenciones -->
+  <div v-if="atenciones.length > 0" class="mt-5">
+    <h2 class="text-center mb-4 titulo">Atenciones Realizadas</h2>
+    <div
+      v-for="(atencion, index) in atenciones"
+      :key="atencion.id"
+      class="card atencion-card"
+    >
+      <div class="card-header header-atencion">
+        <h5>
+          Atención #{{ index + 1 }} - Paciente: {{ atencion.turno?.paciente?.nombre || 'N/A' }}
+        </h5>
+        <p>
+          <strong>Fecha:</strong> {{ atencion.turno?.fecha || 'N/A' }} |
+          <strong>Hora:</strong> {{ atencion.turno?.hora || 'N/A' }}
+        </p>
+        <button
+          class="btn btn-detalle"
+          @click="toggleDetalles(index)"
+        >
+          {{ atencion.mostrarDetalles ? 'Ocultar Detalles' : 'Ver Detalles' }}
+        </button>
+        <!-- Botones Agregados -->
+        <button
+          class="btn btn-warning mx-2"
+          @click="irActualizarAtencion(atencion.id)"
+        >
+          Actualizar Atención
+        </button>
+        <button
+          class="btn btn-danger"
+          @click="eliminarAtencion(atencion.id)"
+        >
+          Eliminar Atención
+        </button>
+      </div>
         <div v-if="atencion.mostrarDetalles" class="card-body">
           <p><strong>Altura:</strong> {{ atencion.altura }} m</p>
           <p><strong>Peso:</strong> {{ atencion.peso }} kg</p>
@@ -99,63 +113,146 @@
 
 <script>
 import apiService from "@/services/apiService";
+import Swal from "sweetalert2";
 
 export default {
   data() {
     return {
       turnos: [], // Lista de turnos reservados
       atenciones: [], // Lista de atenciones realizadas
-      successMessage: "", // Mensaje de éxito
-      errorMessage: "", // Mensaje de error
     };
   },
   methods: {
     async obtenerTurnosReservados() {
       try {
         const response = await apiService.obtenerTurnosReservados();
+        console.log("Turnos reservados obtenidos:", response.data); // Verifica los datos obtenidos
         this.turnos = response.data || [];
       } catch (error) {
-        console.error("Error al obtener turnos reservados:", error);
+        console.error("Error al obtener turnos reservados:", error.response || error);
+
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al obtener los turnos reservados.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     async obtenerAtenciones() {
       try {
         const response = await apiService.obtenerAtenciones();
+        console.log("Atenciones obtenidas:", response.data); // Verifica los datos obtenidos
         this.atenciones = response.data.atencion.map((atencion) => ({
           ...atencion,
           mostrarDetalles: false,
         }));
       } catch (error) {
-        console.error("Error al obtener atenciones:", error);
+        console.error("Error al obtener atenciones:", error.response || error);
+
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al obtener las atenciones.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     toggleDetalles(index) {
       if (this.atenciones[index]) {
+        console.log(`Toggling detalles para atención en índice ${index}:`, this.atenciones[index]); // Depuración de la atención seleccionada
         this.atenciones[index].mostrarDetalles = !this.atenciones[index].mostrarDetalles;
       }
     },
+    generarAtencion(turnoId) {
+      console.log("Redirigiendo para generar atención con turnoId:", turnoId); // Verifica el turnoId que estás pasando
+      this.$router.push({ name: "GenerarAtencion", params: { turnoId } });
+
+      Swal.fire({
+        title: "Atención Generada",
+        text: "Se está redirigiendo para generar la atención.",
+        icon: "info",
+        confirmButtonText: "Aceptar",
+      });
+    },
     async crearTurnos() {
       try {
-        const response = await apiService.crearTurno();  // Llamamos a la función de apiService para crear los turnos
-        console.log('Respuesta al crear turnos:', response.data);
-        // Mostrar mensaje de éxito
-        this.successMessage = "¡Turnos generados con éxito!";
-        this.errorMessage = ""; // Limpiar mensajes de error
+        const response = await apiService.crearTurno(); // Llamamos a la función de apiService para crear los turnos
+        console.log("Respuesta al crear turnos:", response.data); // Verifica la respuesta del backend
         this.obtenerTurnosReservados(); // Opcional, actualiza la lista de turnos después de crearlos
+
+        Swal.fire({
+          title: "¡Éxito!",
+          text: "¡Turnos generados con éxito!",
+          icon: "success",
+          confirmButtonText: "Aceptar",
+        });
       } catch (error) {
-        console.error('Error al generar los turnos:', error);
-        // Mostrar mensaje de error
-        this.errorMessage = "Hubo un problema al generar los turnos.";
-        this.successMessage = ""; // Limpiar mensajes de éxito
+        console.error("Error al generar los turnos:", error.response || error);
+
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al generar los turnos.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
+      }
+    },
+    irActualizarAtencion(atencionId) {
+      console.log("Redirigiendo a actualizar atención con ID:", atencionId);
+      this.$router.push({ name: "ActualizarAtencion", params: { id: atencionId } });
+
+      Swal.fire({
+        title: "Actualización de Atención",
+        text: "Se está redirigiendo para actualizar la atención.",
+        icon: "info",
+        confirmButtonText: "Aceptar",
+      });
+    },
+    async eliminarAtencion(atencionId) {
+      try {
+        const result = await Swal.fire({
+          title: "¿Estás seguro?",
+          text: "Esta acción no se puede deshacer.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+        });
+
+        if (result.isConfirmed) {
+          console.log("Intentando eliminar atención con ID:", atencionId);
+          await apiService.eliminarAtencion(atencionId);
+          this.atenciones = this.atenciones.filter((atencion) => atencion.id !== atencionId);
+
+          Swal.fire({
+            title: "Eliminado",
+            text: "La atención se eliminó con éxito.",
+            icon: "success",
+            confirmButtonText: "Aceptar",
+          });
+        }
+      } catch (error) {
+        console.error("Error al eliminar la atención:", error.response || error);
+
+        Swal.fire({
+          title: "Error",
+          text: "Ocurrió un error al eliminar la atención.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
   },
   mounted() {
-    this.obtenerTurnosReservados(); // Cargar turnos al montar el componente
-    this.obtenerAtenciones(); // Cargar atenciones realizadas al montar el componente
+    console.log("Componente montado, cargando datos...");
+    this.obtenerTurnosReservados();
+    this.obtenerAtenciones();
   },
 };
 </script>
+
+
 
 <style scoped>
 .login-container {

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Crear una instancia de Axios con configuración predeterminada
 const apiClient = axios.create({
-  baseURL: 'http://192.168.1.9:8080/api', //Ponemos la ip de la back
+  baseURL: 'http://127.0.0.1:8000/api', //Ponemos la ip de la back
   withCredentials: true, // Necesario para enviar cookies con Laravel Sanctum
   headers: {
     Accept: 'application/json',
@@ -85,6 +85,7 @@ export default {
   obtenerAtenciones() {
     return apiClient.get('/atenciones');
   },
+  
 
   // Crear un turno
   crearTurno(turnoData) {
@@ -112,7 +113,7 @@ export default {
   },
   // Obtener una atención por ID
   async obtenerAtencionPorId(id) {
-    return axios.get(`/atenciones/${id}`);
+    return apiClient.get(`atenciones/${id}`);
   },
 
   // Crear una nueva atención
@@ -122,21 +123,20 @@ export default {
 
   // Actualizar una atención existente
   async actualizarAtencion(id, data) {
-    return axios.put(`/atenciones/${id}`, data);
+    return apiClient.put(`/atenciones/${id}`, data);
   },
 
   // Verificar si existe una atención para un turno
   async verificarAtencion(turnoId) {
-    return axios.get(`/atenciones/verificar?turno_id=${turnoId}`);
+    return apiClient.get(`/atenciones/verificar?turno_id=${turnoId}`);
   },
 
   // Eliminar una atención
   async eliminarAtencion(id) {
-    return axios.delete(`/atenciones/${id}`);
+    return apiClient.delete(`/atenciones/${id}`);
   },
   async obtenerTurnoPorId(turnoId) {
     return apiClient.get(`/turnos/${turnoId}`); // Cambia la ruta si es diferente
   }
   
 };
-

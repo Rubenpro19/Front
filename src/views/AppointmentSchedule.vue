@@ -66,6 +66,7 @@
 
 <script>
 import apiService from "../services/apiService";
+import Swal from "sweetalert2";
 
 export default {
   data() {
@@ -76,8 +77,7 @@ export default {
       turnosMatutinos: [], // Turnos matutinos
       turnosVespertinos: [], // Turnos vespertinos
       turnosReservados: [], // Turnos reservados por el usuario
-      message: "", // Mensaje de estado
-      isSuccessMessage: true, // Control de mensaje (éxito/error)
+      turnosCargadosMostrado: false, // Control para mostrar el mensaje una sola vez
     };
   },
   async mounted() {
@@ -96,9 +96,19 @@ export default {
       try {
         const response = await apiService.get("/nutricionistas");
         this.nutricionistas = response.data;
+        Swal.fire({
+          title: "¡Cargado correctamente!",
+          text: "Lista de nutricionistas cargada exitosamente.",
+          icon: "info",
+          confirmButtonText: "Aceptar",
+        });
       } catch (err) {
-        this.message = "Error al cargar la lista de nutricionistas.";
-        this.isSuccessMessage = false;
+        Swal.fire({
+          title: "Error",
+          text: "Error al cargar la lista de nutricionistas.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     async cargarTurnos() {
@@ -130,73 +140,138 @@ export default {
           return hora >= 14 && hora < 18;
         });
 
-        this.message = ""; // Limpiar mensajes
+        // Mostrar mensaje solo la primera vez que se cargan los turnos
+        if (!this.turnosCargadosMostrado) {
+          Swal.fire({
+            title: "¡Turnos cargados!",
+            text: "Los turnos del nutricionista seleccionado se han cargado exitosamente.",
+            icon: "info",
+            confirmButtonText: "Aceptar",
+          });
+          this.turnosCargadosMostrado = true; // Marcar como mostrado
+        }
       } catch (err) {
-        this.message = "Error al cargar los turnos.";
-        this.isSuccessMessage = false;
+        Swal.fire({
+          title: "Error",
+          text: "Error al cargar los turnos.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     async reservarTurno(turnoId) {
       try {
         const response = await apiService.post("/turnos/reservar", { turno_id: turnoId });
-        this.message = response.data.message;
-        this.isSuccessMessage = true;
+
+        Swal.fire({
+          title: "¡Éxito!",
+          text: response.data.message,
+          icon: "success",
+          confirmButtonText: "Aceptar",
+        });
 
         // Refrescar turnos después de reservar
         await this.cargarTurnos();
       } catch (err) {
-        this.message = err.response?.data?.message || "Error al reservar el turno.";
-        this.isSuccessMessage = false;
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Error al reservar el turno.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     async cancelarTurno(turnoId) {
       try {
         const response = await apiService.delete(`/turnos/${turnoId}`);
-        this.message = response.data.message;
-        this.isSuccessMessage = true;
+
+        Swal.fire({
+          title: "¡Cancelado!",
+          text: response.data.message,
+          icon: "success",
+          confirmButtonText: "Aceptar",
+        });
 
         // Refrescar turnos después de cancelar
         await this.cargarTurnos();
       } catch (err) {
-        this.message = err.response?.data?.message || "Error al cancelar el turno.";
-        this.isSuccessMessage = false;
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Error al cancelar el turno.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
   },
 };
 </script>
 
+
+
 <style scoped>
 .appointment-container {
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
 }
 
-.appointment-container h2{
+.appointment-container h2 {
   display: flex;
   justify-content: center;
-}
-.nutricionistas-section {
+  font-size: 24px;
+  font-weight: bold;
   margin-bottom: 20px;
+  color: #333;
+}
+
+.nutricionistas-section {
+  margin-bottom: 30px;
+}
+
+.nutricionistas-section select {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+}
+
+.nutricionistas-section select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 .turnos-container {
   display: flex;
-  gap: 20px; /* Espaciado entre columnas */
-  flex-wrap: wrap; /* Permite que las columnas se ajusten en pantallas pequeñas */
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .turnos-column {
-  flex: 1 1 45%; /* Ajuste flexible para columnas */
-  padding: 15px;
+  flex: 1 1 calc(50% - 10px);
+  padding: 20px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: #f9f9f9;
-  margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.turnos-column:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .turnos-column h3 {
-  margin-bottom: 10px;
-  font-size: 18px;
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #555;
 }
 
 .turnos-column ul {
@@ -209,29 +284,53 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 16px;
 }
 
+/* Estilo general de botones */
 .turnos-column button {
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
+  padding: 8px 15px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
+/* Botón de Cancelar Turno */
+.turnos-column button[aria-label="Cancelar turno"] {
+  background-color: #dc3545; /* Rojo llamativo */
+  color: white; /* Texto blanco */
+  box-shadow: 0px 2px 5px rgba(220, 53, 69, 0.5);
+}
+
+.turnos-column button[aria-label="Cancelar turno"]:hover {
+  background-color: #c82333; /* Rojo más oscuro */
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 10px rgba(220, 53, 69, 0.7);
+}
+
+.turnos-column button[aria-label="Cancelar turno"]:active {
+  background-color: #bd2130; /* Rojo aún más oscuro */
+  transform: translateY(0px);
+  box-shadow: 0px 1px 3px rgba(220, 53, 69, 0.7);
+}
+
 .turnos-column button:hover {
   background-color: #0056b3;
+  transform: translateY(-2px);
 }
 
 .message {
   margin-top: 20px;
-  padding: 10px;
+  padding: 15px;
   border-radius: 5px;
   text-align: center;
+  font-size: 16px;
 }
 
 .message.success {
@@ -244,10 +343,22 @@ export default {
   color: white;
 }
 
-/* Estilos responsivos */
+/* Estilos para pantallas pequeñas */
 @media (max-width: 768px) {
   .turnos-column {
     flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .nutricionistas-section select {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .turnos-column button {
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 </style>

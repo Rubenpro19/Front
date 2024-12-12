@@ -94,25 +94,25 @@
 </template>
 
 <script>
-import apiService from '../services/apiService';
+import apiService from "../services/apiService";
+import Swal from "sweetalert2";
 
 export default {
   data() {
     return {
       usuarios: [],
       newUser: {
-        nombre: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
+        nombre: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
         rol_id: 3,
       },
       editedUser: null,
       showCreateForm: false,
       showEditForm: false,
-      showError: false,
-      errorMessage: '',
-      adminId: JSON.parse(sessionStorage.getItem('user')).id,
+      adminId: JSON.parse(sessionStorage.getItem("user")).id,
+      usuariosCargadosMostrado: false, // Control para mostrar el mensaje solo una vez
     };
   },
   created() {
@@ -121,38 +121,98 @@ export default {
   methods: {
     async obtenerUsuarios() {
       try {
-        const response = await apiService.get('/user');
-        this.usuarios = response.data.filter(usuario => usuario.rol_id === 2 || usuario.rol_id === 3);
+        const response = await apiService.get("/user");
+        this.usuarios = response.data.filter(
+          (usuario) => usuario.rol_id === 2 || usuario.rol_id === 3
+        );
+
+        // Mostrar mensaje solo la primera vez
+        if (!this.usuariosCargadosMostrado) {
+          Swal.fire({
+            title: "¡Usuarios cargados!",
+            text: "La lista de usuarios se ha cargado correctamente.",
+            icon: "info",
+            confirmButtonText: "Aceptar",
+          });
+          this.usuariosCargadosMostrado = true; // Marcar como mostrado
+        }
       } catch (error) {
-        console.error('Error al obtener usuarios:', error);
+        console.error("Error al obtener usuarios:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo cargar la lista de usuarios.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     mostrarFormularioCrearUsuario() {
       this.showCreateForm = true;
     },
     cancelarCrearUsuario() {
-      this.showCreateForm = false;
-      this.newUser = { nombre: '', email: '', password: '', password_confirmation: '', rol_id: 3 };
-      this.showError = false;
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Se perderán los datos ingresados.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cancelar",
+        cancelButtonText: "No",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.showCreateForm = false;
+          this.newUser = {
+            nombre: "",
+            email: "",
+            password: "",
+            password_confirmation: "",
+            rol_id: 3,
+          };
+        }
+      });
     },
     async crearUsuario() {
       if (this.newUser.password !== this.newUser.password_confirmation) {
-        this.errorMessage = 'Las contraseñas no coinciden.';
-        this.showError = true;
+        Swal.fire({
+          title: "Error",
+          text: "Las contraseñas no coinciden.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
         return;
       }
       try {
-        await apiService.post('/user', this.newUser);
+        await apiService.post("/user", this.newUser);
         this.showCreateForm = false;
         this.obtenerUsuarios();
-        this.newUser = { nombre: '', email: '', password: '', password_confirmation: '', rol_id: 3 };
+        this.newUser = {
+          nombre: "",
+          email: "",
+          password: "",
+          password_confirmation: "",
+          rol_id: 3,
+        };
+        Swal.fire({
+          title: "¡Usuario creado!",
+          text: "El usuario se ha creado exitosamente.",
+          icon: "success",
+          confirmButtonText: "Aceptar",
+        });
       } catch (error) {
-        this.errorMessage = error.response?.data.message || 'Error en la creación del usuario.';
-        this.showError = true;
+        console.error("Error al crear usuario:", error);
+        Swal.fire({
+          title: "Error",
+          text: error.response?.data.message || "Error en la creación del usuario.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     async editarUsuario(usuario) {
-      this.editedUser = { id: usuario.id, nombre: usuario.nombre, email: usuario.email }; // Solo los campos editables
+      this.editedUser = {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+      };
       this.showEditForm = true;
     },
     async guardarEdicionUsuario() {
@@ -161,21 +221,67 @@ export default {
         await apiService.put(`/user/${id}`, { nombre, email });
         this.showEditForm = false;
         this.obtenerUsuarios();
+        Swal.fire({
+          title: "¡Usuario editado!",
+          text: "El usuario se ha editado correctamente.",
+          icon: "success",
+          confirmButtonText: "Aceptar",
+        });
       } catch (error) {
-        console.error('Error al editar usuario:', error);
+        console.error("Error al editar usuario:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo editar el usuario.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     },
     cancelarEdicionUsuario() {
-      this.showEditForm = false;
-      this.editedUser = null;
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Se perderán los cambios no guardados.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cancelar",
+        cancelButtonText: "No",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.showEditForm = false;
+          this.editedUser = null;
+        }
+      });
     },
     async eliminarUsuario(id) {
-      try {
-        await apiService.delete(`/user/${id}`);
-        this.obtenerUsuarios();
-      } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-      }
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "No",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await apiService.delete(`/user/${id}`);
+            this.obtenerUsuarios();
+            Swal.fire({
+              title: "¡Usuario eliminado!",
+              text: "El usuario ha sido eliminado correctamente.",
+              icon: "success",
+              confirmButtonText: "Aceptar",
+            });
+          } catch (error) {
+            console.error("Error al eliminar usuario:", error);
+            Swal.fire({
+              title: "Error",
+              text: "No se pudo eliminar el usuario.",
+              icon: "error",
+              confirmButtonText: "Aceptar",
+            });
+          }
+        }
+      });
     },
   },
 };
