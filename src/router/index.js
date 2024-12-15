@@ -13,6 +13,7 @@ import AdminDashboard from '../views/AdminDashboard.vue'; // Vista de admin
 import NutricionistaDashboard from '../views/NutricionistaDashboard.vue';
 import GenerarAtencion from '@/views/GenerarAtencion.vue'; // Vista de nutricionista
 import VerAtencion from '@/views/VerAtencion.vue';
+import ActualizarAtencion from '@/views/ActualizarAtencion.vue';
 
 const routes = [
   { path: '/', name: 'HomePage', component: Home },
@@ -23,7 +24,7 @@ const routes = [
   { path: '/services', name: 'Services', component: ServicesPage },
   { path: '/about', name: 'About', component: AboutUsPage },
   { path: '/contact', name: 'Contact', component: ContactPage },
-  
+
   // Ruta protegida para el panel de usuario (Paciente)
   {
     path: '/UserDashboard',
@@ -61,12 +62,15 @@ const routes = [
     component: VerAtencion,
     props: true
   },
-
-
+  {
+    path: "/atenciones/:id/editar",
+    name: "ActualizarAtencion",
+    component: ActualizarAtencion,
+  },
   // Redirección por defecto
   { path: '/:pathMatch(.*)*', redirect: '/' },
 
-  
+
 ];
 
 const router = createRouter({
